@@ -17,6 +17,9 @@ export function parseAtom(s: string): AtomType {
     if (atom.toLowerCase() === 'nil') {
       return <Atom<boolean>>{ value: false }
     }
+    if (atom.toLowerCase() === 'if') {
+      return <Atom<string>>{ value: 'if' }
+    }
     return <Atom<string>>{ value: atom }
    } else {
     return <Atom<number>>{ value: Number(atom) }

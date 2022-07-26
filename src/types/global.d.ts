@@ -32,4 +32,8 @@ declare global {
   interface LogicalAtomMap {
     [key: string]: (args: AtomType) => Atom<boolean>
   }
+
+  interface ConditionalMap {
+    [key: string]: (args: List) => AtomType
+  }
 }

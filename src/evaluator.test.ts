@@ -295,3 +295,32 @@ describe('stdLib logical operations', () => {
     })
   })
 })
+
+describe('stdLib conditional functions', () => {
+  describe('if', () => {
+    it('should throw when unexpected argument lengths are given', async () => {
+      [
+        '(if)',
+        '(if true)',
+        '(if nil)',
+        '(if nil (+ 1 1) (- 2 1) (eq 1 1))',
+      ].forEach(expression => {
+        expect(() => evaluate(parseList(expression))).toThrow()
+      })
+    })
+
+    it('should successfully run "if" condition when given expected arguments', async () => {
+      [
+        { expression: '(IF nil (+ 1 1))', expected: false },
+        { expression: '(IF T (+ 1 1))', expected: 2 },
+        { expression: '(if nil (+ 1 1) (eq 1 1))', expected: true },
+        { expression: '(if (eq 2 (+ 1 1)) (- 5 3))', expected: 2 },
+        { expression: '(if (noteq 2 (+ 1 1)) (- 5 3) (/ 8 2))', expected: 4 },
+        { expression: '(if nil (+ 1 1) (- 5 3))', expected: 2 },
+      ].forEach(scenario => {
+        const actual = evaluate(parseList(scenario.expression))
+        expect(actual.value).toEqual(scenario.expected)
+      })
+    })
+  })
+})

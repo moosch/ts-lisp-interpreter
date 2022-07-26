@@ -15,7 +15,7 @@ Lexer -> parser -> evaluator
 
 ## Todo
 
-- [ ] Treat `()` as a falsey value
+- [ ] Treat `()` as a falsy value
 - [ ] Add to standard library
 - [ ] Add ability to define macros
 - [ ] Script to run input string (or file) through interpreter

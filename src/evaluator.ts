@@ -69,12 +69,40 @@ function not(args: AtomType): Atom<boolean> {
   // return <Atom<boolean>>{ value: args.value === false ? true : false }
 }
 
+function doIf(list: List) {
+  const condition = list.items[0]
+  const first = list.items[1]
+  const second = list.items[2]
+
+  if (evaluate(condition).value) {
+    return evaluate(first)
+  } else {
+    // Returns false if condition is false and no "else" is provided
+    return second ? evaluate(second) : <Atom<boolean>>{ value: false }
+  }
+}
+
 // Known arithmetic operators
 const stdLibOperators: OperatorMap = {
   '+': add,
   '-': sub,
   '*': mul,
   '/': div,
+}
+
+function doArithmeticFunction(first: Atom<string>, rest: List) {
+  const evaluatedArgs = rest.items.map(e => evaluate(e))
+  if (evaluatedArgs.length < 2) {
+    throw new Error(`Not enough arguments to ${first.value} function`)
+  }
+  const fn = stdLibOperators[first.value]
+  const firstArg = <Atom<number>>evaluatedArgs[0]
+  const args = evaluatedArgs.slice(1)
+  return args
+    .reduce((acc, arg) => {
+      return fn(<Atom<number>>acc, <Atom<number>>arg)
+    },
+    firstArg)
 }
 
 const stdLibComparisons: ComparisonMap = {
@@ -94,32 +122,6 @@ const stdLibComparisons: ComparisonMap = {
   'lte': lte,
 }
 
-const stdLibLogicalListOperators: LogicalListMap = {
-  '&&': and,
-  'and': and,
-  '||': or,
-  'or': or,
-}
-
-const stdLibLogicalAtomOperators: LogicalAtomMap = {
-  'not': not,
-}
-
-function doArithmeticFunction(first: Atom<string>, rest: List) {
-  const evaluatedArgs = rest.items.map(e => evaluate(e))
-  if (evaluatedArgs.length < 2) {
-    throw new Error(`Not enough arguments to ${first.value} function`)
-  }
-  const fn = stdLibOperators[first.value]
-  const firstArg = <Atom<number>>evaluatedArgs[0]
-  const args = evaluatedArgs.slice(1)
-  return args
-    .reduce((acc, arg) => {
-      return fn(<Atom<number>>acc, <Atom<number>>arg)
-    },
-    firstArg)
-}
-
 function doComparisonFunction(first: Atom<string>, rest: List): Atom<boolean> {
   if (rest.items.length !== 2) {
     throw new Error(`Not enough arguments to ${first.value} comparison function`)
@@ -127,6 +129,10 @@ function doComparisonFunction(first: Atom<string>, rest: List): Atom<boolean> {
   const [a, b] = rest.items
   const fn = stdLibComparisons[first.value]
   return fn(evaluate(a), evaluate(b))
+}
+
+const stdLibLogicalAtomOperators: LogicalAtomMap = {
+  'not': not,
 }
 
 function doLogicalAtomOperatorFunction(first: Atom<string>, rest: List): Atom<boolean> {
@@ -139,11 +145,36 @@ function doLogicalAtomOperatorFunction(first: Atom<string>, rest: List): Atom<bo
   return fn(result as Atom<boolean>)
 }
 
+const stdLibLogicalListOperators: LogicalListMap = {
+  '&&': and,
+  'and': and,
+  '||': or,
+  'or': or,
+}
+
 function doLogicalListOperatorFunction(first: Atom<string>, rest: List): Atom<boolean> {
   if (rest.items.length < 1) {
     throw new Error(`Not enough arguments for ${first} function. Expected at least 1`)
   }
   const fn = stdLibLogicalListOperators[first.value]
+  return fn(rest)
+}
+
+const stdLibConditionalFunction: ConditionalMap = {
+  'if': doIf,
+}
+
+function doConditionalFunction(first: Atom<string>, rest: List) {
+  // Must have at least a single branch: (if t (+ 1 1))
+  if (rest.items.length < 2) {
+    throw new Error(`Nothing to evaluate after "${first}" condition. Expected at least 1 expression`)
+  }
+  // Doesn't allow more than 2 branches: (if t (+ 1 1) (+ 2 2))
+  if (rest.items.length > 3) {
+    throw new Error(`Too many expressions after "${first}" condition. Expected 2 maximum`)
+  }
+
+  const fn = stdLibConditionalFunction[first.value]
   return fn(rest)
 }
 
@@ -164,6 +195,10 @@ export function evaluate(expression: AtomType | List): AtomType {
     }
     if (first.value in stdLibLogicalListOperators) {
       return doLogicalListOperatorFunction(first, rest)
+    }
+    // TODO: Make this into a macro
+    if (first.value === 'if') {
+      return doConditionalFunction(first, rest)
     }
   }
   throw new Error(`Unknown expression error ${expression}`)
