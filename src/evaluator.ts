@@ -66,7 +66,6 @@ function or(list: List): Atom<boolean> {
 
 function not(args: AtomType): Atom<boolean> {
   return <Atom<boolean>>{ value: !args.value }
-  // return <Atom<boolean>>{ value: args.value === false ? true : false }
 }
 
 function doIf(list: List) {
@@ -137,7 +136,7 @@ const stdLibLogicalAtomOperators: LogicalAtomMap = {
 
 function doLogicalAtomOperatorFunction(first: Atom<string>, rest: List): Atom<boolean> {
   if (rest.items.length !== 1) {
-    throw new Error(`Too many arguments for ${first} function. Expected only 1`)
+    throw new Error(`Too many arguments for ${first.value} function. Expected only 1`)
   }
   const fn = stdLibLogicalAtomOperators[first.value]
   const arg = rest.items[0]
@@ -154,7 +153,7 @@ const stdLibLogicalListOperators: LogicalListMap = {
 
 function doLogicalListOperatorFunction(first: Atom<string>, rest: List): Atom<boolean> {
   if (rest.items.length < 1) {
-    throw new Error(`Not enough arguments for ${first} function. Expected at least 1`)
+    throw new Error(`Not enough arguments for ${first.value} function. Expected at least 1`)
   }
   const fn = stdLibLogicalListOperators[first.value]
   return fn(rest)
@@ -167,15 +166,23 @@ const stdLibConditionalFunction: ConditionalMap = {
 function doConditionalFunction(first: Atom<string>, rest: List) {
   // Must have at least a single branch: (if t (+ 1 1))
   if (rest.items.length < 2) {
-    throw new Error(`Nothing to evaluate after "${first}" condition. Expected at least 1 expression`)
+    throw new Error(`Nothing to evaluate after "${first.value}" condition. Expected at least 1 expression`)
   }
   // Doesn't allow more than 2 branches: (if t (+ 1 1) (+ 2 2))
   if (rest.items.length > 3) {
-    throw new Error(`Too many expressions after "${first}" condition. Expected 2 maximum`)
+    throw new Error(`Too many expressions after "${first.value}" condition. Expected 2 maximum`)
   }
 
   const fn = stdLibConditionalFunction[first.value]
   return fn(rest)
+}
+
+function doFunctionDefinition(first: Atom<string>, rest: List) {
+  if (rest.items.length < 2) {
+    throw new Error(`Not enough arguments to "${first.value}" function call`)
+  }
+
+  return <Atom<boolean>>{ value: true }
 }
 
 export function evaluate(expression: AtomType | List): AtomType {
@@ -199,6 +206,9 @@ export function evaluate(expression: AtomType | List): AtomType {
     // TODO: Make this into a macro
     if (first.value === 'if') {
       return doConditionalFunction(first, rest)
+    }
+    if (first.value === 'defun') {
+      return doFunctionDefinition(first, rest)
     }
   }
   throw new Error(`Unknown expression error ${expression}`)

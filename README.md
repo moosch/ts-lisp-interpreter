@@ -16,6 +16,10 @@ Lexer -> parser -> evaluator
 ## Todo
 
 - [ ] Treat `()` as a falsy value
-- [ ] Add to standard library
+- [ ] Create contexts to add function and variable definitions to
+- [ ] Add user defined functions
+- [ ] Add user defined variables
+- [ ] Add recursion
 - [ ] Add ability to define macros
+- [ ] Add cond
 - [ ] Script to run input string (or file) through interpreter

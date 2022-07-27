@@ -317,10 +317,35 @@ describe('stdLib conditional functions', () => {
         { expression: '(if (eq 2 (+ 1 1)) (- 5 3))', expected: 2 },
         { expression: '(if (noteq 2 (+ 1 1)) (- 5 3) (/ 8 2))', expected: 4 },
         { expression: '(if nil (+ 1 1) (- 5 3))', expected: 2 },
+        { expression: '(if (+ 1 1) good)', expected: 'good' },
+        { expression: '(if (eq 2 1) good bad)', expected: 'bad' },
       ].forEach(scenario => {
         const actual = evaluate(parseList(scenario.expression))
         expect(actual.value).toEqual(scenario.expected)
       })
     })
+  })
+})
+
+describe('defun', () => {
+  it('should throw if "defun" is supplied with less than 2 arguments', async () => {
+    [
+      '(defun)',
+      '(defun testing)',
+    ].forEach(expression => {
+      expect(() => evaluate(parseList(expression))).toThrow()
+    })
+  })
+
+  // it('should throw when trying to create a function with a name that already exists', async () => {
+
+  // })
+
+  it('should create a function with the supplied name', async () => {
+    [
+      { expression: '(defun tester () 2)', args: [], result: 2 },
+    ].forEach(scenario => {
+      const actual = evaluate(parseList(scenario.expression))
+    });
   })
 })
